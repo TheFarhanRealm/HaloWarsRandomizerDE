@@ -1,0 +1,328 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Halo Wars DE Randomizer</title>
+<style>
+  :root { color-scheme: dark; }
+
+body{
+  margin:0;
+  font-family:Arial,sans-serif;
+  background:#0a0a0a;
+  color:#eee;
+}
+
+.container{
+  max-width:99vw;
+  min-height:100vh;
+  margin:auto;
+  background:#0a0a0a;
+  display:flex;
+  flex-direction:column;
+  align-items:center;
+  padding:8vw 4vw 5vw;
+  box-sizing:border-box;
+}
+
+.page{
+  width:100%;
+  max-width:420px;
+  margin-top:2vw;
+  padding:3vw 4vw 4vw;
+  background:#1c1f23;
+  border-radius:14px;
+  box-shadow:0 4px 20px #0007;
+  display:none;
+  flex-direction:column;
+  box-sizing:border-box;
+}
+.active{ display:flex; }
+
+h1{
+  margin:0 0 3vw;
+  font-size:1.35rem;
+  text-align:center;
+  color:#85b5ff;
+  font-weight:800;
+  line-height:1.2;
+}
+
+select,button{
+  width:100%;
+  padding:.9em;
+  font-size:1rem;
+  border-radius:8px;
+  border:none;
+  margin:2vw 0;
+  box-sizing:border-box;
+}
+
+select{
+  appearance:none;
+  background:#23272c;
+  color:#fff;
+  border:1.2px solid #30497c;
+  font-weight:600;
+}
+
+button{
+  background:#4b8dff;
+  color:#fff;
+  cursor:pointer;
+  font-weight:600;
+  transition:.15s;
+}
+button:active{ background:#3763a9; }
+
+.results{
+  margin-bottom:4vw;
+  padding:1em;
+  background:#222;
+  border-radius:10px;
+  text-align:center;
+  font-size:1.05em;
+  color:#b3e2ff;
+  word-break:break-word;
+  min-height:2.2em;
+}
+
+/* Faction styling */
+.unsc-color,.faction-unsc{ color:#46ff6c!important;font-weight:700; }
+.cov-color,.faction-covenant{ color:#c27fff!important;font-weight:700; }
+
+select.faction-unsc,.results.unsc-color{
+  border-color:#44ce6a!important;
+  box-shadow:0 0 0 2px #46ff6c55;
+}
+select.faction-covenant,.results.cov-color{
+  border-color:#b469fd!important;
+  box-shadow:0 0 0 2px #c27fff55;
+}
+
+label{
+  display:block;
+  margin:.8vw 0 .5vw;
+  font-size:.95em;
+  color:#a5b4cb;
+  font-weight:500;
+}
+
+/* Responsive */
+@media(max-width:600px){
+  .container{ padding:3vw 2vw 4vw; }
+  .page{ max-width:97vw;padding:6vw 3vw 9vw; }
+  h1{ font-size:1.1rem; }
+}
+
+@media(max-width:400px){
+  .page{ padding:4vw 2vw 7vw; }
+  h1{ font-size:1rem; }
+}
+</style>
+</head>
+<body>
+<div class="container">
+
+  <!-- Difficulty Page -->
+  <form id="pageDifficulty" class="page active" autocomplete="off" onsubmit="return false;">
+    <h1>Halo Wars<br/>Definitive Edition<br/>Randomizer</h1>
+
+    <label for="difficultySelect">Difficulty</label>
+    <select id="difficultySelect" aria-label="Difficulty">
+      <option>Easy</option>
+      <option selected>Normal</option>
+      <option>Heroic</option>
+      <option>Legendary</option>
+      <option>Automatic</option>
+    </select>
+
+    <button type="button" id="randDiff" aria-label="Randomize Difficulty">Randomize Difficulty</button>
+    <div class="results" id="diffResult">
+      Difficulty: <span class="unsc-color">Normal</span>
+    </div>
+
+    <button type="button" id="nextToUnits">Next: Randomize Unit →</button>
+  </form>
+
+  <!-- Units Page -->
+  <form id="pageUnits" class="page" autocomplete="off" onsubmit="return false;">
+    <h1>Unit Randomizer</h1>
+
+    <label for="factionSelect">Faction</label>
+    <select id="factionSelect" aria-label="Faction">
+      <option value="covenant">Covenant</option>
+      <option value="unsc">UNSC</option>
+    </select>
+
+    <label for="unitSelect">Unit</label>
+    <select id="unitSelect"></select>
+
+    <button type="button" id="randUnit" aria-label="Randomize Unit">Randomize Unit</button>
+    <div class="results" id="unitResult"></div>
+
+    <button type="button" id="backToDiff">&larr; Back to Difficulty</button>
+  </form>
+
+</div>
+
+<script>
+  // Difficulty and Faction Data
+  const difficulties = ["Easy", "Normal", "Heroic", "Legendary", "Automatic"];
+  // Default faction for appropriate color on load
+  let currFaction = "covenant";
+
+  const units = {
+    covenant: [
+      "Banshee", "Vampire", "Scarab", "Ghost", "Wraith",
+      "Locust", "Jackal", "Hunter", "Grunt", "Special Leader Unit"
+    ],
+    unsc: [
+      "Marines", "Flamethrower", "Spartan", "Warthog",
+      "Scorpion", "Cobra", "Wolverine", "Hornet",
+      "Vulture", "Special Leader Unit"
+    ]
+  };
+
+  // Get DOM
+  const pageDiff = document.getElementById('pageDifficulty');
+  const pageUnits = document.getElementById('pageUnits');
+  const diffSelect = document.getElementById('difficultySelect');
+  const diffResult = document.getElementById('diffResult');
+  const randDiffBtn = document.getElementById('randDiff');
+  const nextBtn = document.getElementById('nextToUnits');
+  const backBtn = document.getElementById('backToDiff');
+
+  const factionSelect = document.getElementById('factionSelect');
+  const unitSelect = document.getElementById('unitSelect');
+  const unitResult = document.getElementById('unitResult');
+  const randUnitBtn = document.getElementById('randUnit');
+
+  // Utility
+  function randomFrom(arr) {
+    return arr[Math.floor(Math.random() * arr.length)];
+  }
+
+  function getFactionColorClass(val) {
+    return val === "unsc" ? "unsc-color" : "cov-color";
+  }
+  function getFactionColor(val) {
+    return val === "unsc" ? "#46ff6c" : "#c27fff";
+  }
+  function getDifficultyColor(difficulty) {
+    // We'll color-code according to difficulty for fun
+    // Easy - blue, Normal - cyan, Heroic - orange, Legendary - red, Automatic - gray
+    const mapping = {
+      Easy:   "#4099ff",
+      Normal: "#46ff6c",
+      Heroic: "#ffd94d",
+      Legendary: "#ff2564",
+      Automatic: "#8fa1b5"
+    };
+    return mapping[difficulty] || "#b3e2ff";
+  }
+
+  // Show/Hide Pages for SPA
+  function showPage(diff) {
+    pageDiff.classList.toggle('active', diff);
+    pageUnits.classList.toggle('active', !diff);
+    document.body.scrollTop = 0;
+    document.documentElement.scrollTop = 0;
+  }
+
+  // Difficulty randomizer
+  randDiffBtn.addEventListener('click', () => {
+    const r = randomFrom(difficulties);
+    diffSelect.value = r;
+    setDiffResult(r);
+  });
+
+  diffSelect.addEventListener('change', () => {
+    setDiffResult(diffSelect.value);
+  });
+
+  function setDiffResult(val) {
+    // Use color for difficulty text for more appeal
+    const color = getDifficultyColor(val);
+    diffResult.innerHTML = `Difficulty: <span style="color:${color};font-weight:700;">${val}</span>`;
+  }
+
+  // Units Selection Loader
+  function loadUnits() {
+    const v = factionSelect.value;
+    currFaction = v;
+    unitSelect.innerHTML = "";
+    units[v].forEach(u => {
+      let opt = document.createElement('option');
+      opt.textContent = u;
+      unitSelect.appendChild(opt);
+    });
+    // Styling for select based on faction
+    unitSelect.classList.remove("faction-unsc", "faction-covenant");
+    unitResult.classList.remove("unsc-color", "cov-color");
+    factionSelect.classList.remove("faction-unsc", "faction-covenant");
+    if(v === "unsc") {
+      unitSelect.classList.add("faction-unsc");
+      factionSelect.classList.add("faction-unsc");
+      setUnitResult(unitSelect.value, v);
+    } else {
+      unitSelect.classList.add("faction-covenant");
+      factionSelect.classList.add("faction-covenant");
+      setUnitResult(unitSelect.value, v);
+    }
+  }
+
+  // When changing faction dropdown
+  factionSelect.addEventListener('change', () => {
+    loadUnits();
+  });
+
+  // Randomize Unit
+  randUnitBtn.addEventListener('click', () => {
+    const v = factionSelect.value;
+    const currUnits = units[v];
+    const r = randomFrom(currUnits);
+    unitSelect.value = r;
+    setUnitResult(r, v);
+  });
+
+  // Show selection in result as option changes
+  unitSelect.addEventListener('change', () => {
+    setUnitResult(unitSelect.value, factionSelect.value);
+  });
+
+  function setUnitResult(unit, faction) {
+    unitResult.classList.remove("unsc-color", "cov-color");
+    if (faction === 'unsc') unitResult.classList.add("unsc-color");
+    else unitResult.classList.add("cov-color");
+    const factionName = faction === 'unsc' ? "UNSC" : "Covenant";
+    // Color only the faction label and unit for clear color distinction
+    unitResult.innerHTML = `Faction: <span class="${getFactionColorClass(faction)}">${factionName}</span><br>` +
+      `Unit: <span class="${getFactionColorClass(faction)}">${unit}</span>`;
+  }
+
+  // Nav buttons
+  nextBtn.addEventListener('click', () => {
+    showPage(false);
+    loadUnits(); // ensure correct default load when navigating
+  });
+  backBtn.addEventListener('click', () => showPage(true));
+
+  // Initial Load
+  showPage(true);
+  setDiffResult(diffSelect.value);
+  loadUnits();
+
+  // (Removed redundant setUnitResult here as requested)
+
+  // If browser font/zoom is huge, don't let forms expand too wide
+  window.addEventListener("resize", () => {
+    document.querySelectorAll(".page").forEach(el => {
+      el.style.maxWidth = window.innerWidth < 500 ? "97vw" : "420px";
+    });
+  });
+
+</script>
+</body>
+</html>
