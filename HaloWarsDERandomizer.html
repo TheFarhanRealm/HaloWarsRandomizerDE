@@ -168,14 +168,14 @@ label{
 </div>
 
 <script>
-  // Difficulty and Faction Data
+  // Difficulty duh
   const difficulties = ["Easy", "Normal", "Heroic", "Legendary", "Automatic"];
   // Default faction for appropriate color on load
   let currFaction = "covenant";
 
   const units = {
     covenant: [
-      "Banshee", "Vampire", "Scarab", "Ghost", "Wraith",
+      "Banshee", "Vampire", "Scarab", "Ghost","Engineer", "Wraith",
       "Locust", "Jackal", "Hunter", "Grunt", "Special Leader Unit"
     ],
     unsc: [
@@ -211,7 +211,7 @@ label{
     return val === "unsc" ? "#46ff6c" : "#c27fff";
   }
   function getDifficultyColor(difficulty) {
-    // We'll color-code according to difficulty for fun
+    // colour coded to show easy peasy gently blue to menacing gray for automatic
     // Easy - blue, Normal - cyan, Heroic - orange, Legendary - red, Automatic - gray
     const mapping = {
       Easy:   "#4099ff",
